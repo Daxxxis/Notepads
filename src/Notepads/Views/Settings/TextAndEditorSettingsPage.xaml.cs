@@ -10,6 +10,7 @@
     using Windows.UI.Text;
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
+    using Windows.UI.Xaml.Media;
 
     public class FontStyleItem
     {
@@ -255,25 +256,18 @@
             {
                 case "BingRadioButton":
                     AppSettingsService.EditorDefaultSearchEngine = SearchEngine.Bing;
-                    CustomSearchUrl.IsEnabled = false;
-                    CustomUrlErrorReport.Visibility = Visibility.Collapsed;
+                    OnCustomSearchEngineSelectionChanged(false);
                     break;
                 case "GoogleRadioButton":
                     AppSettingsService.EditorDefaultSearchEngine = SearchEngine.Google;
-                    CustomSearchUrl.IsEnabled = false;
-                    CustomUrlErrorReport.Visibility = Visibility.Collapsed;
+                    OnCustomSearchEngineSelectionChanged(false);
                     break;
                 case "DuckDuckGoRadioButton":
                     AppSettingsService.EditorDefaultSearchEngine = SearchEngine.DuckDuckGo;
-                    CustomSearchUrl.IsEnabled = false;
-                    CustomUrlErrorReport.Visibility = Visibility.Collapsed;
+                    OnCustomSearchEngineSelectionChanged(false);
                     break;
                 case "CustomSearchUrlRadioButton":
-                    CustomSearchUrl.IsEnabled = true;
-                    CustomSearchUrl.Focus(FocusState.Programmatic);
-                    CustomSearchUrl.Select(CustomSearchUrl.Text.Length, 0);
-                    CustomUrlErrorReport.Visibility = IsValidUrl(CustomSearchUrl.Text) ? Visibility.Collapsed : Visibility.Visible;
-                    AppSettingsService.EditorCustomMadeSearchUrl = CustomSearchUrl.Text;
+                    OnCustomSearchEngineSelectionChanged(true);
                     break;
             }
         }
@@ -369,7 +363,10 @@
 
         private void FontFamilyPicker_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            AppSettingsService.EditorFontFamily = (string)e.AddedItems.First();
+            var fontFamily = new FontFamily((string)e.AddedItems.First());
+            AppSettingsService.EditorFontFamily = fontFamily.Source;
+            FontStylePicker.FontFamily = fontFamily;
+            FontWeightPicker.FontFamily = fontFamily;
         }
 
         private void FontSizePicker_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -426,6 +423,7 @@
             }
 
             CustomUrlErrorReport.Visibility = IsValidUrl(CustomSearchUrl.Text) ? Visibility.Collapsed : Visibility.Visible;
+            AppSettingsService.EditorCustomMadeSearchUrl = CustomSearchUrl.Text;
         }
 
         private static bool IsValidUrl(string url)
@@ -447,6 +445,28 @@
                 return false;
             }
             return true;
+        }
+
+        private void OnCustomSearchEngineSelectionChanged(bool selected)
+        {
+            if (selected)
+            {
+                CustomSearchUrl.IsEnabled = true;
+                CustomSearchUrl.Focus(FocusState.Programmatic);
+                CustomSearchUrl.Select(CustomSearchUrl.Text.Length, 0);
+                if (IsValidUrl(CustomSearchUrl.Text))
+                {
+                    AppSettingsService.EditorDefaultSearchEngine = SearchEngine.Custom;
+                    AppSettingsService.EditorCustomMadeSearchUrl = CustomSearchUrl.Text;
+                }
+                CustomSearchUrl_TextChanged(null, null);
+            }
+            else
+            {
+                CustomSearchUrl.IsEnabled = false;
+                CustomSearchUrl.Text = AppSettingsService.EditorCustomMadeSearchUrl;
+                CustomUrlErrorReport.Visibility = Visibility.Collapsed;
+            }
         }
     }
 }

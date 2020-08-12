@@ -1,5 +1,6 @@
 ﻿namespace Notepads.Services
 {
+    using Microsoft.Toolkit.Uwp.Helpers;
     using System.Collections.Generic;
 
     public static class FileExtensionProvider
@@ -31,6 +32,8 @@
             ".c", ".m", ".i",
             //CGI
             ".cgi",
+            //Cheat
+            ".cht",
             //Clojure
             ".clj", ".cljs", ".cljc", ".cljx", ".clojure", ".edn",
             //Cmake
@@ -43,6 +46,8 @@
             ".cfg", ".config", ".cnf", ".conf", ".properties", ".directory",
             //C++
             ".cpp", ".cc", ".mm", ".cxx", ".ii", ".ino",
+            //C Sharp Project
+            ".csproj",
             //C#
             ".cs", ".csx", ".cake",
             //CSS
@@ -55,10 +60,14 @@
             ".dockerfile",
             //EBuild
             ".ebuild",
+            //ENV
+            ".env",
             //F#
             ".fs", ".fsi", ".fsx", ".fsscript",
             //Git
             ".gitignore", ".gitattributes", ".gitconfig",
+            //GLSLP
+            ".glslp",
             //GLSP
             ".glsp",
             //Go
@@ -89,12 +98,16 @@
             ".jsp", ".jspx",
             //Less
             ".less",
+            //License
+            ".lic",
             //Log
             ".log",
             //Lyrics
             ".lrc",
             //LUA
             ".lua",
+            //M3U
+            ".m3u", ".m3u8",
             //Map
             ".map",
             //Markdown
@@ -103,6 +116,8 @@
             ".nfo",
             //NPM Config
             ".npmrc",
+            //OPT
+            ".opt",
             //Perl 6
             ".p6", ".pl6", ".pm6", ".nqp",
             //Perl
@@ -117,12 +132,18 @@
             ".profile",
             //Project
             ".project", ".prj",
+            //Property List
+            ".plist",
             //Pug
             ".jade", ".pug",
+            //PVD
+            ".pvd",
             //Python
             ".py",
             //Razor
             ".cshtml",
+            //Resource
+            ".resx",
             //R
             ".r", ".rhistory", ".rprofile", ".rt",
             //Ruby
@@ -147,6 +168,8 @@
             ".txt",
             //T
             ".t",
+            //TOML
+            ".toml",
             //TypeScript
             ".ts", ".tsx",
             //User
@@ -163,6 +186,8 @@
             ".xaml",
             //XML
             ".xml", ".xsd", ".ascx", ".atom", ".axml", ".bpmn", ".cpt", ".csl",
+            //XSL
+            ".xsl",
             //YAML
             ".yml", ".yaml",
             //Z shell Config
@@ -173,6 +198,13 @@
 
         public static bool IsFileExtensionSupported(string fileExtension)
         {
+            // Windows 10 2004 (build 19041) enables support for handling any kind of file
+            // https://github.com/microsoft/ProjectReunion/issues/27
+            if (SystemInformation.OperatingSystemVersion.Build >= 19041)
+            {
+                return true;
+            }
+
             if (string.IsNullOrEmpty(fileExtension))
             {
                 return false;

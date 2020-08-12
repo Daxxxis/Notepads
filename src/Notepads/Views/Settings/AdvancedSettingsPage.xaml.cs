@@ -10,16 +10,17 @@
 
     public sealed partial class AdvancedSettingsPage : Page
     {
-        private readonly IReadOnlyCollection<LanguageItem> SupportedLanguages;
+        private readonly IReadOnlyCollection<LanguageItem> SupportedLanguages = LanguageUtility.GetSupportedLanguageItems();
 
         public AdvancedSettingsPage()
         {
             InitializeComponent();
 
             ShowStatusBarToggleSwitch.IsOn = AppSettingsService.ShowStatusBar;
+            EnableSmartCopyToggleSwitch.IsOn = AppSettingsService.IsSmartCopyEnabled;
 
             // Disable session snapshot toggle for shadow windows
-            if (!App.IsFirstInstance)
+            if (!App.IsPrimaryInstance)
             {
                 EnableSessionSnapshotToggleSwitch.IsOn = false;
                 EnableSessionSnapshotToggleSwitch.IsEnabled = false;
@@ -40,12 +41,8 @@
                 LaunchPreferenceSettingsControls.Visibility = Visibility.Collapsed;
             }
 
-#if DEBUG
-            SupportedLanguages = LanguageUtility.GetSupportedLanguageItems();
-            FindName("LanguagePreferenceSettingsPanel"); // Lazy loading
-            LanguagePicker.SelectedItem = SupportedLanguages
-                .FirstOrDefault(language => language.ID == ApplicationLanguages.PrimaryLanguageOverride);
-#endif
+            LanguagePicker.SelectedItem = SupportedLanguages.FirstOrDefault(language => language.ID == ApplicationLanguages.PrimaryLanguageOverride);
+            RestartPrompt.Visibility = LanguageUtility.CurrentLanguageID == ApplicationLanguages.PrimaryLanguageOverride ? Visibility.Collapsed : Visibility.Visible;
 
             Loaded += AdvancedSettings_Loaded;
             Unloaded += AdvancedSettings_Unloaded;
@@ -54,18 +51,23 @@
         private void AdvancedSettings_Loaded(object sender, RoutedEventArgs e)
         {
             ShowStatusBarToggleSwitch.Toggled += ShowStatusBarToggleSwitch_Toggled;
+            EnableSmartCopyToggleSwitch.Toggled += EnableSmartCopyToggleSwitch_Toggled;
             EnableSessionSnapshotToggleSwitch.Toggled += EnableSessionBackupAndRestoreToggleSwitch_Toggled;
             AlwaysOpenNewWindowToggleSwitch.Toggled += AlwaysOpenNewWindowToggleSwitch_Toggled;
-#if DEBUG
             LanguagePicker.SelectionChanged += LanguagePicker_SelectionChanged;
-#endif
         }
 
         private void AdvancedSettings_Unloaded(object sender, RoutedEventArgs e)
         {
             ShowStatusBarToggleSwitch.Toggled -= ShowStatusBarToggleSwitch_Toggled;
+            EnableSmartCopyToggleSwitch.Toggled -= EnableSmartCopyToggleSwitch_Toggled;
             EnableSessionSnapshotToggleSwitch.Toggled -= EnableSessionBackupAndRestoreToggleSwitch_Toggled;
             AlwaysOpenNewWindowToggleSwitch.Toggled -= AlwaysOpenNewWindowToggleSwitch_Toggled;
+        }
+
+        private void EnableSmartCopyToggleSwitch_Toggled(object sender, RoutedEventArgs e)
+        {
+            AppSettingsService.IsSmartCopyEnabled = EnableSmartCopyToggleSwitch.IsOn;
         }
 
         private void EnableSessionBackupAndRestoreToggleSwitch_Toggled(object sender, RoutedEventArgs e)

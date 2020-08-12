@@ -18,6 +18,7 @@
     using Windows.Storage;
     using Windows.System;
     using Windows.UI.Core;
+    using Windows.UI.Text;
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
     using Windows.UI.Xaml.Controls.Primitives;
@@ -105,7 +106,7 @@
                 if (SplitPanel != null && SplitPanel.Visibility == Visibility.Visible)
                 {
                     ShowHideContentPreview();
-                }   
+                }
             }
         }
 
@@ -193,7 +194,8 @@
             TextEditorCore.TextChanging += TextEditorCore_OnTextChanging;
             TextEditorCore.SelectionChanged += TextEditorCore_OnSelectionChanged;
             TextEditorCore.KeyDown += TextEditorCore_OnKeyDown;
-            TextEditorCore.CopySelectedTextToWindowsClipboardRequested += TextEditorCore_CopySelectedTextToWindowsClipboardRequested;
+            TextEditorCore.CopyTextToWindowsClipboardRequested += TextEditorCore_CopyTextToWindowsClipboardRequested;
+            TextEditorCore.CutSelectedTextToWindowsClipboardRequested += TextEditorCore_CutSelectedTextToWindowsClipboardRequested;
             TextEditorCore.ContextFlyout = new TextEditorContextFlyout(this, TextEditorCore);
 
             // Init shortcuts
@@ -221,7 +223,8 @@
             TextEditorCore.TextChanging -= TextEditorCore_OnTextChanging;
             TextEditorCore.SelectionChanged -= TextEditorCore_OnSelectionChanged;
             TextEditorCore.KeyDown -= TextEditorCore_OnKeyDown;
-            TextEditorCore.CopySelectedTextToWindowsClipboardRequested -= TextEditorCore_CopySelectedTextToWindowsClipboardRequested;
+            TextEditorCore.CopyTextToWindowsClipboardRequested -= TextEditorCore_CopyTextToWindowsClipboardRequested;
+            TextEditorCore.CutSelectedTextToWindowsClipboardRequested -= TextEditorCore_CutSelectedTextToWindowsClipboardRequested;
 
             if (TextEditorCore.ContextFlyout is TextEditorContextFlyout contextFlyout)
             {
@@ -351,7 +354,11 @@
         private void TextEditor_Loaded(object sender, RoutedEventArgs e)
         {
             Loaded?.Invoke(this, e);
+
             StartCheckingFileStatusPeriodically();
+
+            // Insert "Legacy Windows Notepad" style date and time if document starts with ".LOG"
+            TextEditorCore.TryInsertNewLogEntry();
         }
 
         private void TextEditor_Unloaded(object sender, RoutedEventArgs e)
@@ -754,18 +761,53 @@
             return TextEditorCore.ContextFlyout;
         }
 
-        public void CopySelectedTextToWindowsClipboard(TextControlCopyingToClipboardEventArgs args)
+        public void CopyTextToWindowsClipboard(TextControlCopyingToClipboardEventArgs args)
         {
             if (args != null)
             {
                 args.Handled = true;
             }
 
+            if (AppSettingsService.IsSmartCopyEnabled)
+            {
+                TextEditorCore.SmartlyTrimTextSelection();
+            }
+
+            CopyTextToWindowsClipboardInternal(true);
+        }
+
+        public void CutSelectedTextToWindowsClipboard(TextControlCuttingToClipboardEventArgs args)
+        {
+            if (args != null)
+            {
+                args.Handled = true;
+            }
+
+            CopyTextToWindowsClipboardInternal(false);
+            TextEditorCore.Document.Selection.SetText(TextSetOptions.None, string.Empty);
+        }
+
+        private void CopyTextToWindowsClipboardInternal(bool clearLineSelection)
+        {
             try
             {
                 DataPackage dataPackage = new DataPackage { RequestedOperation = DataPackageOperation.Copy };
+                var isTextSelected = TextEditorCore.Document.Selection.Length > 0;
+                var cursorPosition = TextEditorCore.Document.Selection.StartPosition;
+
+                if (!isTextSelected)
+                {
+                    TextEditorCore.Document.Selection.Expand(TextRangeUnit.Paragraph);
+                }
+
                 var text = LineEndingUtility.ApplyLineEnding(TextEditorCore.Document.Selection.Text, GetLineEnding());
                 dataPackage.SetText(text);
+
+                if (clearLineSelection && !isTextSelected)
+                {
+                    TextEditorCore.Document.Selection.SetRange(cursorPosition, cursorPosition);
+                }
+
                 Clipboard.SetContentWithOptions(dataPackage, new ClipboardContentOptions() { IsAllowedInHistory = true, IsRoamable = true });
                 Clipboard.Flush(); // This method allows the content to remain available after the application shuts down.
             }
@@ -791,11 +833,8 @@
                     return false;
                 }
             }
-            if (!string.Equals(LastSavedSnapshot.Content, TextEditorCore.GetText()))
-            {
-                return false;
-            }
-            return true;
+
+            return string.Equals(LastSavedSnapshot.Content, TextEditorCore.GetText());
         }
 
         private void OnEscapeKeyDown()
@@ -893,9 +932,14 @@
             GoToPlaceholder?.Dismiss();
         }
 
-        private void TextEditorCore_CopySelectedTextToWindowsClipboardRequested(object sender, TextControlCopyingToClipboardEventArgs e)
+        private void TextEditorCore_CopyTextToWindowsClipboardRequested(object sender, TextControlCopyingToClipboardEventArgs e)
         {
-            CopySelectedTextToWindowsClipboard(e);
+            CopyTextToWindowsClipboard(e);
+        }
+
+        private void TextEditorCore_CutSelectedTextToWindowsClipboardRequested(object sender, TextControlCuttingToClipboardEventArgs e)
+        {
+            CutSelectedTextToWindowsClipboard(e);
         }
 
         private void FindAndReplaceControl_OnToggleReplaceModeButtonClicked(object sender, bool showReplaceBar)
@@ -974,10 +1018,15 @@
                             out regexError);
                     break;
                 case FindAndReplaceMode.Replace:
-                    found = TextEditorCore.TryFindNextAndReplace(
-                        findAndReplaceEventArgs.SearchContext,
-                        findAndReplaceEventArgs.ReplaceText,
-                        out regexError);
+                    found = findAndReplaceEventArgs.SearchDirection == SearchDirection.Next
+                        ? TextEditorCore.TryFindNextAndReplace(
+                            findAndReplaceEventArgs.SearchContext,
+                            findAndReplaceEventArgs.ReplaceText,
+                            out regexError)
+                        : TextEditorCore.TryFindPreviousAndReplace(
+                            findAndReplaceEventArgs.SearchContext,
+                            findAndReplaceEventArgs.ReplaceText,
+                            out regexError);
                     break;
                 case FindAndReplaceMode.ReplaceAll:
                     found = TextEditorCore.TryFindAndReplaceAll(

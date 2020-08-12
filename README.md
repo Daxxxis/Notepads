@@ -69,6 +69,11 @@ So here comes the “Notepads” 🎉 (s stands for Sets).
 
 Notepads is available in Microsoft Store. You can get the latest version of Notepads here for free: [Microsoft Store Link](https://www.microsoft.com/store/apps/9nhl4nsc67wm).
 
+You can also use Windows Package Manager to install notepads:
+```cmd
+winget install notepads
+```
+
 ## Roadmap:
 
 * [Project Roadmap](ROADMAP.md)
@@ -118,10 +123,10 @@ You might notice that I work for Microsoft but Notepads is my personal project t
 * Code Contributors: [DanverZ](https://github.com/chenghanzou), [BernhardWebstudio](https://github.com/BernhardWebstudio), [Csányi István](https://github.com/AmionSky), [Pavel Erokhin](https://github.com/MairwunNx), [Sergio Pedri](https://github.com/Sergio0694), [Lucas Pinho B. Santos](https://github.com/pinholucas), [Soumya Ranjan Mahunt](https://github.com/soumyamahunt), [Belleve Invis](https://github.com/be5invis), [Maickonn Richard](https://github.com/Maickonn)
 * Documentation Contributors: [Craig S.](https://github.com/sercraig)
 * Localization Contributors: 
-    * [fr-FR][French (France)]: [François Rousselet](https://github.com/frousselet), [François-Joseph du Fou](https://github.com/FJduFou)
+    * [fr-FR][French (France)]: [François Rousselet](https://github.com/frousselet), [François-Joseph du Fou](https://github.com/FJduFou), [Armand Delessert](https://github.com/ArmandDelessert)
     * [es-ES][Spanish (Spain)]: [Jose Pinilla](https://github.com/joseppinilla)
     * [zh-CN][Chinese (S)]: [lindexi](https://github.com/lindexi), [walterlv](https://github.com/walterlv), [Jackie Liu](https://github.com/JasonStein)
-    * [hu-HU][Hungarian (Hungary)]: [Csányi István](https://github.com/AmionSky), [KristofKekesi](https://github.com/KristofKekesi)
+    * [hu-HU][Hungarian (Hungary)]: [Csányi István](https://github.com/AmionSky), [Kristóf Kékesi](https://github.com/KristofKekesi)
     * [tr-TR][Turkish (Turkey)]: [Mert Can Demir](https://github.com/validatedev)
     * [ja-JP][Japanese (Japan)]: [Mamoru Satoh](https://github.com/pnp0a03)
     * [de-DE][German (Germany)]/[de-CH][German (Switzerland)]: [Walter Wolf](https://github.com/WalterWolf49)
